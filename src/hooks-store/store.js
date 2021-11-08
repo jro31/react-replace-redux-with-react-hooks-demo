@@ -4,7 +4,7 @@ let globalState = {};
 let listeners = [];
 let actions = {};
 
-export const useStore = () => {
+export const useStore = (shouldListen = true) => {
   const setState = useState(globalState)[1];
 
   const dispatch = (actionIdentifier, payload) => {
@@ -12,19 +12,21 @@ export const useStore = () => {
     globalState = { ...globalState, ...newState };
 
     for (const listener of listeners) {
-      listener(globalState); // Will cause all components that use this store to re-render
+      listener(globalState);
     }
   };
 
   useEffect(() => {
-    // This effect will run once per component where it's called, as that component is rendered
-    listeners.push(setState);
+    if (shouldListen) {
+      listeners.push(setState);
+    }
 
-    // Therefore, this clean-up function that removes the listener for a particular component, will run only when the component unmounts again
     return () => {
-      listeners = listeners.filter(li => li !== setState);
+      if (shouldListen) {
+        listeners = listeners.filter(li => li !== setState);
+      }
     };
-  }, [setState]);
+  }, [setState, shouldListen]);
 
   return [globalState, dispatch];
 };
